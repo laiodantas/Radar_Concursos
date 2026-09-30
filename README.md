@@ -134,6 +134,17 @@ O workflow `.github/workflows/sync-concursos.yml` executa `npm run sync` a cada 
 
 Use um serviço PostgreSQL gerenciado, configure as variáveis de ambiente, execute `npm run db:deploy` antes de iniciar a aplicação e configure o cron/worker acima. A publicação redistribui campos retornados pela PCI; consulte as condições de uso e obtenha autorização aplicável antes de oferecer redistribuição comercial.
 
+## Publicação na Vercel e deploy automático
+
+O projeto Vercel `laio/radar-concursos` está conectado ao repositório `laiodantas/Radar_Concursos`. A branch de produção é `main`: cada push nela gera uma nova compilação e, quando bem-sucedida, atualiza o endereço de produção. Outras branches geram prévias pela integração Git.
+
+- `vercel.json` define Next.js, instalação com `npm ci` e compilação com `npm run build`, que também gera o cliente Prisma.
+- Configure `DATABASE_URL` e `DIRECT_URL` como secrets de **Production** na Vercel, com o banco usado pela sincronização. Configure `RADAR_SOURCE=pci` para exibir os registros reais.
+- As prévias sem banco configurado exibem dados fictícios, sinalizados como demonstração. Não é necessário compartilhar credenciais de produção com branches de prévia.
+- Arquivos `.env`, `.env.local` e `.vercel` permanecem fora do Git. A configuração local da CLI contém apenas o vínculo do projeto.
+- O GitHub Actions atualiza o banco a cada três horas; o deploy automático atualiza o código do site quando há push. A página lê o banco em cada acesso, sem precisar de novo deploy para refletir a sincronização.
+- Confira deploys e logs no painel da Vercel. Se uma compilação falhar, o endereço de produção conserva a última versão publicada com sucesso.
+
 ## Cobertura e limites
 
 O MCP é beta público e a PCI declara que a coleção pode ser incompleta. O radar só pode refletir as ferramentas e filtros efetivamente consultados. A listagem de 2026-09-29 veio em um lote único (454 registros, igual a `meta.total`) e o `inputSchema` não expõe paginação, mas isso não garante que o acervo cubra todos os editais: não prometa cobertura nacional. Para ampliar a cobertura, configure consultas direcionadas por cargos, UFs e regiões em `PCI_QUERIES_JSON` e compare os resultados antes de alegar abrangência. Como nenhuma ferramenta devolve cidade, o filtro "Cidade" do painel não tem dados quando só `listar_concursos` é consultada.

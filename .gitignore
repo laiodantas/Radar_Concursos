@@ -9,3 +9,4 @@ public/preview.html
 *.log
 *.tsbuildinfo
 .neon
+.vercel
