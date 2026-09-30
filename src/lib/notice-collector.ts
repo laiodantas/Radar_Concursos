@@ -26,7 +26,19 @@ export function findNotice(html: string, sourceUrl: string): string | null {
 export async function fetchNotice(sourceUrl: string): Promise<string | null> {
   const source = new URL(sourceUrl);
   if (source.origin !== PCI_ORIGIN || !source.pathname.startsWith('/noticias/')) return null;
-  const response = await fetch(sourceUrl, { signal: AbortSignal.timeout(10_000), redirect: 'error', headers: { 'User-Agent': 'RadarConcursos/1.0 (consulta de editais publicos)' } });
+  const signal = AbortSignal.timeout(10_000);
+  let pageUrl = source;
+  let response: Response;
+  for (let redirects = 0; ; redirects++) {
+    response = await fetch(pageUrl, { signal, redirect: 'manual', headers: { 'User-Agent': 'RadarConcursos/1.0 (consulta de editais publicos)' } });
+    if (![301, 302, 303, 307, 308].includes(response.status)) break;
+    const location = response.headers.get('location');
+    await response.body?.cancel();
+    if (!location || redirects >= 3) throw new Error('Redirecionamento inválido');
+    const next = new URL(location, pageUrl);
+    if (next.origin !== PCI_ORIGIN || !next.pathname.startsWith('/noticias/') || next.username || next.password) throw new Error('Redirecionamento fora da fonte');
+    pageUrl = next;
+  }
   if (!response.ok || !response.headers.get('content-type')?.includes('text/html')) throw new Error(`Página indisponível: HTTP ${response.status}`);
   const reader = response.body?.getReader();
   if (!reader) throw new Error('Página vazia');
@@ -34,5 +46,5 @@ export async function fetchNotice(sourceUrl: string): Promise<string | null> {
   try {
     for (;;) { const { done, value } = await reader.read(); if (done) break; size += value.length; if (size > 2_000_000) throw new Error('Página excede limite'); chunks.push(value); }
   } finally { await reader.cancel(); }
-  return findNotice(Buffer.concat(chunks).toString('utf8'), sourceUrl);
+  return findNotice(Buffer.concat(chunks).toString('utf8'), pageUrl.href);
 }
