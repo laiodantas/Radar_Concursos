@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Conexão direta (sem pool) para migrações; no Neon o pool usa PgBouncer em modo transação.
+  directUrl = env("DIRECT_URL")
+}
+
+model Concurso {
+  id             String   @id @default(cuid())
+  sourceKey      String   @unique
+  sourceUrl      String?
+  title          String
+  organization   String?
+  roles          String[] @default([])
+  city           String?
+  uf             String?
+  region         String?
+  vacancies      String?
+  salary         String?
+  registrationStart DateTime?
+  registrationEnd DateTime?
+  status         String?
+  noticeUrl      String?
+  applicationUrl String?
+  firstSeenAt    DateTime
+  lastSeenAt     DateTime
+  contentHash    String
+  raw            Json
+  isDemo         Boolean  @default(false)
+  events         RadarEvent[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([registrationEnd])
+  @@index([uf, city])
+  @@index([firstSeenAt])
+}
+
+model SyncRun {
+  id             String   @id @default(cuid())
+  startedAt      DateTime @default(now())
+  completedAt    DateTime?
+  status         String
+  source         String
+  isBaseline     Boolean  @default(false)
+  returnedCount  Int      @default(0)
+  /// Total anunciado pela fonte (meta.total) na execução; nulo quando a fonte não informa.
+  expectedCount  Int?
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+}
+
+model RadarEvent {
+  id          String   @id @default(cuid())
+  concursoId  String
+  concurso    Concurso @relation(fields: [concursoId], references: [id], onDelete: Cascade)
+  kind        String
+  summary     String
+  changes     Json?
+  createdAt   DateTime @default(now())
+  deliveredAt DateTime?
+  @@index([createdAt])
+}
