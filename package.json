@@ -13,6 +13,7 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "sync": "tsx scripts/sync.ts",
+    "collect:notices": "tsx scripts/collect-notices.ts",
     "probe:pci": "tsx scripts/probe-pci.ts",
     "preview:pci": "tsx scripts/preview.ts",
     "contrast": "tsx scripts/contrast.ts",

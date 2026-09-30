@@ -31,7 +31,7 @@ export async function synchronize(pciFetcher: typeof fetchPci = fetchPci, storag
         sourceUrl: item.sourceUrl ?? null, title: item.title, organization: item.organization ?? null, roles: item.roles,
         city: item.city ?? null, uf: item.uf ?? null, region: item.region ?? null, vacancies: item.vacancies ?? null,
         salary: item.salary ?? null, registrationStart: item.registrationStart ?? null, registrationEnd: item.registrationEnd ?? null,
-        status: item.status ?? null, noticeUrl: item.noticeUrl ?? null, applicationUrl: item.applicationUrl ?? null,
+        status: item.status ?? null, noticeUrl: item.noticeUrl ?? existing.get(item.sourceKey)?.noticeUrl ?? null, applicationUrl: item.applicationUrl ?? null,
         lastSeenAt: now, contentHash: item.contentHash, raw: item.raw as object, isDemo: sourceName === 'demo'
       });
       const added = items.filter(item => !existing.has(item.sourceKey));
@@ -42,7 +42,8 @@ export async function synchronize(pciFetcher: typeof fetchPci = fetchPci, storag
       for (const item of items) {
         const old = existing.get(item.sourceKey);
         if (!old || old.contentHash === item.contentHash) continue;
-        const changes = trackedContestFields.filter(key => value(old[key]) !== value(item[key])).map(key => ({ field: key, from: jsonValue(old[key]), to: jsonValue(item[key]) }));
+        const current = { ...item, noticeUrl: item.noticeUrl ?? old.noticeUrl };
+        const changes = trackedContestFields.filter(key => value(old[key]) !== value(current[key])).map(key => ({ field: key, from: jsonValue(old[key]), to: jsonValue(current[key]) }));
         await tx.concurso.update({ where: { id: old.id }, data: dataFor(item) });
         if (changes.length) pending.push({ concursoId: old.id, kind: 'changed', summary: 'Prazo, vagas ou outro dado do concurso mudou', changes });
       }

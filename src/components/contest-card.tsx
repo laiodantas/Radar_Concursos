@@ -26,6 +26,7 @@ export function ContestCard({ contest: c, index, now }: { contest: Contest; inde
           <p>{c.registrationStart && <><strong>Início informado:</strong> {brDate(c.registrationStart)}. </>}<strong>No painel desde:</strong> {brDate(c.firstSeenAt)}.</p>
           {c.salary && <p>A remuneração pode variar conforme o cargo. Confirme os valores no edital.</p>}
           {c.noticeUrl && <a className="notice-link edital-button" href={c.noticeUrl} target="_blank" rel="noopener noreferrer"><FileText size={16} aria-hidden="true"/>Ver Edital<ArrowUpRight size={16} aria-hidden="true"/></a>}
+          {c.noticeUrl?.endsWith('#captcha-editais') && <p>O edital está na seção de arquivos da PCI. A fonte pode pedir uma verificação de segurança para liberar o PDF.</p>}
           {c.applicationUrl && <a className="notice-link" href={c.applicationUrl} target="_blank" rel="noreferrer"><ArrowUpRight size={15}/>Página de inscrição</a>}
         </div>
       </details>

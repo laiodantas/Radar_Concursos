@@ -124,6 +124,16 @@ O workflow `.github/workflows/sync-concursos.yml` executa `npm run sync` a cada 
 - Confira os resultados em Actions e a última atualização bem-sucedida no painel. O GitHub pode atrasar os horários e desativa agendamentos de repositórios públicos após 60 dias sem atividade.
 - Runners padrão de repositórios públicos são gratuitos. Banco, hospedagem e fonte têm limites próprios; o workflow não altera planos pagos.
 
+### Coleta de editais
+
+Após cada sincronização, o workflow executa `npm run collect:notices`. O coletor lê as notícias públicas da PCI, identifica os anexos rotulados como edital e preenche `noticeUrl`.
+
+Quando existe um PDF público, o botão aponta para ele. Quando a PCI libera o PDF apenas após CAPTCHA, o botão aponta para `#captcha-editais` da notícia correspondente. O painel explica essa etapa: o usuário conclui a verificação na própria PCI. O coletor não tenta resolver nem contornar CAPTCHA, não inventa URLs de documentos e ignora links de notícias relacionadas, resultados e retificações isoladas.
+
+As consultas têm limite de dez segundos, quatro trabalhadores, pausa de 250ms e orçamento de cinco minutos por execução. Páginas conferidas são reutilizadas por 24 horas; falhas temporárias voltam a ser tentadas após três horas. Uma falha conserva links já encontrados. Metadados de coleta ficam em `raw._radarNotice`, sem alterar o JSON original dos campos da fonte. A sincronização MCP preserva os editais coletados quando a resposta não fornece esse campo.
+
+Nem toda página da fonte publica um edital. Nesses casos, o botão não aparece até ser encontrado um anexo correspondente. Nenhuma migração de banco é necessária.
+
 ## Banco, testes e publicação
 
 - Migração local: `npm run db:migrate`
