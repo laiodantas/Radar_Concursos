@@ -8,11 +8,12 @@ export function findNotice(html: string, sourceUrl: string): string | null {
   for (const match of html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)) {
     const tag = match[1];
     const label = (attribute(tag, 'title') || match[2].replace(/<[^>]*>/g, '')).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    if (!/\bedital\b/.test(label) || /retifica|resultado|gabarito|convoca/.test(label)) continue;
     if (attribute(tag, 'class')?.split(/\s+/).includes('edital-pdf-link')) {
       // A PCI libera o PDF após CAPTCHA; o usuário acessa a seção legítima.
-      if (/id=["']captcha-editais["']/.test(html)) return `${source.origin}${source.pathname}#captcha-editais`;
+      // Aberturas militares usam "aviso de convocação"; alguns anexos usam nome de arquivo.
+      if (!/resultado|gabarito|homologacao/.test(label) && /id=["']captcha-editais["']/.test(html)) return `${source.origin}${source.pathname}#captcha-editais`;
     }
+    if (!/\bedital\b/.test(label) || /resultado|gabarito|convoca/.test(label)) continue;
     const href = attribute(tag, 'href');
     if (!href) continue;
     try {

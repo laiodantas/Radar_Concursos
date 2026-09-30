@@ -5,6 +5,11 @@ on:
     # UTC; em Brasília: 00:15, 03:15, 06:15, 09:15, 12:15, 15:15, 18:15, 21:15.
     - cron: '15 */3 * * *'
   workflow_dispatch:
+    inputs:
+      retry_missing:
+        description: Tentar novamente os editais ainda não encontrados
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -52,7 +57,7 @@ jobs:
           SYNC_MAX_RETRIES: '2'
           TZ: America/Sao_Paulo
       - name: Coletar links dos editais
-        run: npm run collect:notices
+        run: npm run collect:notices -- ${{ inputs.retry_missing && '--retry-missing' || '' }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DATABASE_URL }}

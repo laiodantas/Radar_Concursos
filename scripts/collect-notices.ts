@@ -12,7 +12,8 @@ async function main() {
       const raw = row.raw as Record<string, unknown>;
       const check = raw._radarNotice as { checkedAt?: string; sourceUrl?: string; failed?: boolean } | undefined;
       const ttl = check?.failed ? 3 * 3600_000 : 24 * 3600_000;
-      if (check?.sourceUrl === row.sourceUrl && check.checkedAt && now - Date.parse(check.checkedAt) < ttl) { skipped++; continue; }
+      const retryMissing = process.argv.includes('--retry-missing') && !row.noticeUrl;
+      if (!retryMissing && check?.sourceUrl === row.sourceUrl && check.checkedAt && now - Date.parse(check.checkedAt) < ttl) { skipped++; continue; }
       let noticeUrl: string | null = null; let error = false;
       try { noticeUrl = await fetchNotice(row.sourceUrl!); checked++; if (noticeUrl) found++; }
       catch { failed++; error = true; }
