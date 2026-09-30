@@ -11,6 +11,7 @@ import { ContestPagination } from './contest-pagination';
 import { DashboardStats } from './dashboard-stats';
 import { DashboardInformation } from './dashboard-information';
 import { useContestFilters } from './use-contest-filters';
+import { SourceSearch } from './source-search';
 
 export default function Dashboard({ data, staticPreview = false }: { data: DashboardData; staticPreview?: boolean }) {
   const { filters, page, setPage, update, clear, storage } = useContestFilters();
@@ -50,6 +51,7 @@ export default function Dashboard({ data, staticPreview = false }: { data: Dashb
         <div className="page-heading"><div className="eyebrow"><span className="eyebrow-line"/>Seu próximo passo</div><h1>Encontre seu concurso.<br/><em>Acompanhe os prazos.</em></h1><p className="heading-copy">Busque por cargo ou órgão, escolha seu estado e compare as oportunidades.</p></div>
         <section id="concursos" className="list-section">
           {!staticPreview && <div id="search-panel" tabIndex={-1}><ContestFilters contests={data.contests} filters={filters} update={update} clear={clear} storage={storage}/></div>}
+          {!staticPreview && !data.stats.isDemo && <SourceSearch now={now}/>}
           <DashboardStats data={data} now={now}/>
           <div className="section-head results-heading"><div><h2 id="results-heading" tabIndex={-1}>Lista de concursos</h2><p className="section-lead">Datas, vagas e remuneração informadas pela PCI. <a href="#como-ler">Entenda a cobertura e os números.</a></p></div></div>
           <div className="results-bar"><span role="status"><strong>{filtered.length}</strong> {filtered.length === 1 ? 'concurso' : 'concursos'}{filtered.length > 0 && ` · mostrando ${start + 1}–${Math.min(start + size, filtered.length)}`}</span><label>Ordenar por<select disabled={staticPreview} value={filters.sort} onChange={e => update('sort', e.target.value)}><option value="recent">Adicionados recentemente</option><option value="deadline">Prazo mais próximo</option></select></label></div>

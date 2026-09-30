@@ -1,7 +1,8 @@
 import type { Contest } from './dashboard-types';
 import { daysTo, registrationState } from './contest-state';
-export type Filters = { q: string; uf: string; city: string; region: string; situation: string; deadline: string; sort: string };
-export const blankFilters: Filters = { q: '', uf: '', city: '', region: '', situation: '', deadline: '', sort: 'recent' };
+import { educationLevels } from './contest-enrichment';
+export type Filters = { q: string; uf: string; city: string; region: string; education?: string; situation: string; deadline: string; sort: string };
+export const blankFilters: Filters = { q: '', uf: '', city: '', region: '', education: '', situation: '', deadline: '', sort: 'recent' };
 export const PAGE_SIZE = 25;
 export const searchText = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
 export function readFilters(value: unknown): Filters {
@@ -14,6 +15,7 @@ export function readFilters(value: unknown): Filters {
   if (!['', 'abertas', 'encerradas', 'futuras', 'sem-prazo'].includes(result.situation)) result.situation = '';
   if (!['', '7', '30', 'ended'].includes(result.deadline)) result.deadline = '';
   if (!['recent', 'deadline'].includes(result.sort)) result.sort = 'recent';
+  if (!['', 'fundamental', 'medio', 'tecnico', 'superior', 'unknown'].includes(result.education ?? '')) result.education = '';
   return result;
 }
 export function filterContests(contests: Contest[], filters: Filters, now: Date) {
@@ -25,6 +27,7 @@ export function filterContests(contests: Contest[], filters: Filters, now: Date)
     const end = daysTo(contest.registrationEnd, now);
     return terms.every(term => hay.includes(term)) && (!filters.uf || contest.uf === filters.uf)
       && (!filters.city || contest.city === filters.city) && (!filters.region || contest.region === filters.region)
+      && (!filters.education || (filters.education === 'unknown' ? !contest.education : educationLevels(contest.education).includes(filters.education)))
       && (!filters.situation || states[filters.situation]?.includes(state))
       && (!filters.deadline || (filters.deadline === 'ended' ? end !== null && end < 0 : state === 'open' && end !== null && end >= 0 && end <= Number(filters.deadline)));
   });

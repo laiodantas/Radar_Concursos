@@ -1,4 +1,5 @@
 import { ArrowUpRight, FileText } from 'lucide-react';
+import Image from 'next/image';
 import type { Contest } from '@/lib/dashboard-types';
 import { brDate, daysTo, deadlineNote, registrationState, stateLabels } from '@/lib/contest-state';
 
@@ -17,13 +18,16 @@ export function ContestCard({ contest: c, index, now }: { contest: Contest; inde
         <div><dt>Remuneração</dt><dd>{c.salary || 'Não informada'}</dd></div>
       </dl>
       <div className="roles-line"><span className="meta-label">Cargos</span> {roles || 'Não informado'}</div>
+      <div className="roles-line"><span className="meta-label">Escolaridade</span> {c.education || 'Não informada pela fonte'}</div>
       <details className="contest-details"><summary>Ver cargos e informações da fonte</summary>
         <div className="details-content">
+          {c.newsImageUrl && <figure className="news-photo"><Image src={c.newsImageUrl} alt={`Imagem da notícia: ${c.organization || c.title}`} width={560} height={320} unoptimized loading="lazy" onError={e => { e.currentTarget.parentElement!.hidden = true; }}/><figcaption>Imagem da notícia · PCI Concursos</figcaption></figure>}
           <p><strong>Concurso:</strong> {c.title}</p>
           <p><strong>Órgão:</strong> {c.organization || 'Não informado'}. <strong>Região:</strong> {c.region || 'Não informada'}.</p>
+          {c.education && <p><strong>Escolaridade:</strong> {c.education}. Os requisitos podem variar por cargo; confirme no edital.</p>}
           {c.roles.length > 0 && <ul aria-label="Todos os cargos">{c.roles.map((role, i) => <li key={`${role}-${i}`}>{role}</li>)}</ul>}
           <p><strong>Situação informada pela fonte:</strong> {c.status || 'Não informada'}</p>
-          <p>{c.registrationStart && <><strong>Início informado:</strong> {brDate(c.registrationStart)}. </>}<strong>No painel desde:</strong> {brDate(c.firstSeenAt)}.</p>
+          <p>{c.registrationStart && <><strong>Início informado:</strong> {brDate(c.registrationStart)}. </>}<strong>{c.sourceResult ? 'Consultado em:' : 'No painel desde:'}</strong> {brDate(c.firstSeenAt)}.</p>
           {c.salary && <p>A remuneração pode variar conforme o cargo. Confirme os valores no edital.</p>}
           {c.noticeUrl && <a className="notice-link edital-button" href={c.noticeUrl} target="_blank" rel="noopener noreferrer"><FileText size={16} aria-hidden="true"/>Ver Edital<ArrowUpRight size={16} aria-hidden="true"/></a>}
           {c.noticeUrl?.endsWith('#captcha-editais') && <p>O edital está na seção de arquivos da PCI. A fonte pode pedir uma verificação de segurança para liberar o PDF.</p>}
@@ -38,3 +42,4 @@ export function ContestCard({ contest: c, index, now }: { contest: Contest; inde
     </div>
   </article>;
 }
+

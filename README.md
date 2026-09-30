@@ -157,6 +157,12 @@ O projeto Vercel `laio/radar-concursos` está conectado ao repositório `laiodan
 
 ## Cobertura e limites
 
+### Escolaridade, imagens e busca na fonte
+
+O painel extrai `formacao` e `noticia.imagem` do JSON já armazenado, sem migração do banco. O filtro de escolaridade inclui concursos com vários níveis; os requisitos específicos devem ser conferidos por cargo no edital. Imagens HTTPS da PCI são exibidas nos detalhes com carregamento sob demanda.
+
+“Buscar diretamente na PCI” consulta `pesquisar_concursos` ou `buscar_por_cargo` pelo servidor, em todo o Brasil, com termo entre 3 e 100 caracteres. Os resultados são separados dos filtros da lista principal e reutilizam os editais já coletados. Buscas não gravam registros no banco. A rota limita consultas concorrentes e novas consultas por minuto por instância e mantém até 100 respostas em memória por dez minutos; o cache é temporário e pode ser descartado pela hospedagem.
+
 O MCP é beta público e a PCI declara que a coleção pode ser incompleta. O radar só pode refletir as ferramentas e filtros efetivamente consultados. A listagem de 2026-09-29 veio em um lote único (454 registros, igual a `meta.total`) e o `inputSchema` não expõe paginação, mas isso não garante que o acervo cubra todos os editais: não prometa cobertura nacional. Para ampliar a cobertura, configure consultas direcionadas por cargos, UFs e regiões em `PCI_QUERIES_JSON` e compare os resultados antes de alegar abrangência. Como nenhuma ferramenta devolve cidade, o filtro "Cidade" do painel não tem dados quando só `listar_concursos` é consultada.
 
 Os filtros preferidos são armazenados em `localStorage` sem conta. `src/lib/notifications.ts` define a interface de canais futuros; no MVP só eventos do site são persistidos e exibidos, sem envio por WhatsApp.
