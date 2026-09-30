@@ -23,6 +23,15 @@ const render = (contests: Contest[], lastRun: LastRun | null = null) => renderTo
 const civilDay = (offsetDays: number) => new Date(Date.now() + offsetDays * 86_400_000).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
 
 describe("painel", () => {
+  it("mostra Ver Edital dentro dos detalhes somente quando há link disponível", () => {
+    const noticeUrl = "https://example.org/concurso/edital.pdf";
+    const withNotice = render([contest({ noticeUrl })]);
+    const details = withNotice.match(/<details\b[^>]*>[\s\S]*?<\/details>/)?.[0] ?? "";
+    assert.ok(details.includes('href="' + noticeUrl + '"'));
+    assert.ok(details.includes('target="_blank" rel="noopener noreferrer"'));
+    assert.ok(details.includes('Ver Edital'));
+    assert.ok(!render([contest()]).includes('Ver Edital'));
+  });
   it("esconde o filtro de cidade quando a fonte não devolve cidade", () => {
     assert.ok(!render([contest()]).includes(">Cidade<"));
   });

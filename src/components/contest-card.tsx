@@ -25,7 +25,7 @@ export function ContestCard({ contest: c, index, now }: { contest: Contest; inde
           <p><strong>Situação informada pela fonte:</strong> {c.status || 'Não informada'}</p>
           <p>{c.registrationStart && <><strong>Início informado:</strong> {brDate(c.registrationStart)}. </>}<strong>No painel desde:</strong> {brDate(c.firstSeenAt)}.</p>
           {c.salary && <p>A remuneração pode variar conforme o cargo. Confirme os valores no edital.</p>}
-          {c.noticeUrl && <a className="notice-link" href={c.noticeUrl} target="_blank" rel="noreferrer"><FileText size={15}/>Ver edital</a>}
+          {c.noticeUrl && <a className="notice-link edital-button" href={c.noticeUrl} target="_blank" rel="noopener noreferrer"><FileText size={16} aria-hidden="true"/>Ver Edital<ArrowUpRight size={16} aria-hidden="true"/></a>}
           {c.applicationUrl && <a className="notice-link" href={c.applicationUrl} target="_blank" rel="noreferrer"><ArrowUpRight size={15}/>Página de inscrição</a>}
         </div>
       </details>

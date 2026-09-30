@@ -225,6 +225,8 @@ dd { font-size: 16px; line-height: 1.4; }
 .source-button:hover { background: var(--forest-2); }
 .no-source { color: var(--muted); font-size: 14px; }
 .notice-link, .pci-link { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-right: 12px; color: var(--accent); font-size: 14px; }
+.edital-button { gap: 8px; margin-top: 12px; padding: 8px 14px; border: 1px solid var(--ink); background: var(--forest); color: var(--on-forest); font-weight: 700; text-decoration: none; }
+.edital-button:hover { background: var(--forest-2); }
 .pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 20px; font-size: 14px; }
 .pagination button, .empty-state button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--ink); background: var(--paper); }
 .pagination button:not(:disabled):hover { background: var(--ink); color: var(--paper); }
