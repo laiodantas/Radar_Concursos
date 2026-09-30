@@ -1,5 +1,7 @@
 const timeZone = "America/Sao_Paulo";
 export function calendarDay(value: Date | string): string {
+  // Uma data civil já representa o dia local; não a interprete como meia-noite UTC.
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
 }
 export function daysRemaining(end: Date | string, now: Date | string = new Date()): number {

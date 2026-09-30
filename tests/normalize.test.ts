@@ -62,7 +62,7 @@ describe("normalização de registros MCP", () => {
     assert.equal(value.region, "SUDESTE");
     assert.equal(value.uf, "SP");
     assert.equal(value.vacancies, "15");
-    assert.equal(value.salary, "R$ 7.181,50");
+    assert.equal(value.salary, "até R$ 7.181,50");
     assert.equal(value.registrationStart?.toISOString(), "2026-09-16T15:00:00.000Z");
     assert.equal(value.registrationEnd?.toISOString(), "2026-10-16T15:00:00.000Z");
     assert.equal(value.status, "Inscrições abertas");
@@ -73,10 +73,10 @@ describe("normalização de registros MCP", () => {
   it("interpreta cadastro de reserva e situação textual sem perder o prazo", () => {
     const reserve = normalizeRecord({ ...real, vagas_salario: "Cadastro de reserva até R$ 8.800,00" });
     assert.equal(reserve.vacancies, "Cadastro de reserva");
-    assert.equal(reserve.salary, "R$ 8.800,00");
+    assert.equal(reserve.salary, "até R$ 8.800,00");
     const withoutVacancies = normalizeRecord({ ...real, vagas_salario: "Vagas até R$ 15.034,81" });
     assert.equal(withoutVacancies.vacancies, undefined);
-    assert.equal(withoutVacancies.salary, "R$ 15.034,81");
+    assert.equal(withoutVacancies.salary, "até R$ 15.034,81");
     const extended = normalizeRecord({ ...real, datas: { ...real.datas, texto: "Prorrogado" } });
     assert.equal(extended.status, "Inscrições abertas (Prorrogado)");
     const closed = normalizeRecord({ ...real, datas: { ...real.datas, aberto: false, texto: "" } });

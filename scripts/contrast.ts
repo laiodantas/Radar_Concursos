@@ -13,7 +13,7 @@ const AA_LARGE = 3;  // texto grande (>=24px, ou >=18,66px em negrito) e compone
 type Tokens = Record<string, string>;
 
 function block(css: string, selector: string) {
-  const at = css.indexOf(selector);
+  const at = css.indexOf(selector.endsWith("{") ? selector : `${selector} {`);
   if (at < 0) throw new Error(`Seletor não encontrado no CSS: ${selector}`);
   const open = css.indexOf("{", at);
   const close = css.indexOf("}", open);

@@ -26,18 +26,19 @@ Abra http://localhost:3000. Os quatro concursos de exemplo têm instituições f
 
 ## Interface
 
-A interface segue a direção **Swiss / International Typographic**: objetividade pela estrutura. Grid rígido, fios de 1px como elementos estruturais (não sombras), alto contraste, tipografia grotesca em escala dramática e cor plana — preto, branco e um único primário vermelho, usado editorialmente. Sem sombras, gradientes ou cantos arredondados. Os títulos e números usam **Archivo Black**; o texto usa **Archivo**; as duas vêm de `next/font`, então ficam self-hosted e não bloqueiam a renderização.
+A interface mantém a direção **Swiss / International Typographic**: Archivo Black nos títulos, Archivo no texto, grid, fios, preto, branco e vermelho. O cabeçalho compacto aproxima a busca do início da página. O CSS é mobile-first, com temas claro e escuro e fontes hospedadas pela aplicação.
 
-- Cores, tipografia e ritmo ficam em `:root` de `src/app/globals.css`. O CSS é mobile-first: a base é o celular e os breakpoints sobem com `min-width` (640, 900, 1200).
-- O painel abre no **tema claro** por padrão. O tema escuro é opt-in pelo botão do cabeçalho, que grava a escolha em `localStorage` (`radar-tema-v1`) e a aplica como `data-theme` no `<html>`. O escuro reinterpreta os mesmos tokens no bloco `[data-theme="dark"]` em vez de inverter a paleta. A lógica do tema (chave, tema efetivo e o script pré-pintura que evita flash de tema escuro) fica em `src/lib/theme.ts`, com testes de regressão em `tests/theme.test.ts`.
-- `src/components/dashboard.tsx` contém o painel inteiro — cartões com rótulos explícitos (Local, Cargos, Vagas), prazo traduzido em dias ("Faltam 3 dias") e a seção **Como ler**, que explica a origem dos números e os limites de cobertura.
-- Sem banco, `src/app/page.tsx` cai no modo demonstração e renderiza o painel com quatro registros fictícios: é o jeito mais rápido de ver a interface (`npm run dev`).
-- `tests/dashboard.test.ts` renderiza o painel com `react-dom/server` e verifica o filtro de cidade, o aviso de consulta incompleta e os textos de prazo.
-- `npm run preview:pci` consulta o MCP e escreve um instantâneo estático do painel em `public/preview.html` (ignorado pelo git), já com o CSS e as fontes da build atual. Serve para revisar o visual com dados reais sem PostgreSQL — os filtros e a busca não funcionam no instantâneo. Rode `npm run dev` ou `npm run build` antes, para existir `.next/static/css`.
-- `npm run contrast` lê `src/app/globals.css`, percorre os pares de tokens em claro e escuro e falha se algum não atingir WCAG AA (4.5:1 para texto, 3:1 para texto grande), além de acusar dessincronia entre os dois blocos de tema escuro. Rode depois de mexer em cor.
-- `npm run audit` abre o painel no Chrome headless por CDP e mede, em claro e escuro e nos breakpoints de 1280 e 375: rolagem horizontal, alvos de toque (44px no mobile), contraste efetivo computado no DOM, ordem de títulos e landmarks, rótulos de formulário, nomes de botões e largura real de linha. Salva capturas em `.design/panel/screenshots/`. O servidor precisa estar de pé (`npm run dev`).
-- `.design/panel/DESIGN_REVIEW.md` registra a revisão de design: capturas, o que foi corrigido e o que ainda depende de banco ou de leitura visual humana.
-
+- Busca por cargo, órgão e palavras-chave sem exigir acentos; filtro de UF em destaque, com região, situação e prazo em filtros adicionais.
+- Preferências salvas automaticamente no navegador (`radar-filtros-v1`), com chips removíveis e mensagem de indisponibilidade quando o armazenamento falha. Tema separado em `radar-tema-v1`.
+- Lista paginada em grupos de 25, ordenação por inclusão ou prazo, contagem de resultados e estado vazio com ação para limpar filtros.
+- Situação atual combina as datas de Brasília com o status da fonte. Prazos vencidos, inscrições futuras, suspensões e cancelamentos ficam identificados. As estatísticas de inscrições abertas e encerramentos próximos usam a mesma regra dos cartões.
+- Cartões compactos com local, vagas, remuneração e prazo. Qualificadores como “até” e intervalos de valores são preservados, inclusive para registros já armazenados. Cargos e informações completas ficam em detalhes expansíveis.
+- Navegação indica a seção visível. Controles têm alvos de 44px, campos usam 16px, foco visível e rótulos acessíveis. As cores dos dois temas são verificadas por `npm run contrast`.
+- `src/components/dashboard.tsx` organiza componentes separados para cartões, filtros, paginação, estatísticas e informações. Regras compartilhadas ficam em `src/lib/contest-state.ts` e `src/lib/contest-filters.ts`.
+- Sem banco configurado, o painel usa quatro registros fictícios com aviso persistente de demonstração.
+- `npm run preview:pci` consulta a fonte e gera `public/preview.html` com todos os registros, sem busca ou paginação interativas. Execute `npm run dev` ou `npm run build` antes para disponibilizar CSS e fontes.
+- Verificações: `npm test`, `npm run lint`, `npm run typecheck`, `npm run build` e `npm run contrast`. A revisão visual e funcional desta versão foi feita no navegador integrado, em 375, 768 e 1280px.
+- `.design/panel/DESIGN_REVIEW.md` registra as mudanças, evidências e limites da revisão de 2026-09-30. `scripts/audit.ts` continua disponível como utilitário independente de auditoria por CDP; não foi utilizado nesta revisão.
 ## PCI MCP
 
 A página oficial anuncia `buscar_por_cargo`, `buscar_por_cidade`, `listar_concursos`, `pesquisar_concursos` e `buscar_apostilas`. Ela diz que as ferramentas de concursos filtram inscrições abertas, descreve os filtros gerais e alerta que o acervo pode não cobrir todos os editais. Apostilas não entram no produto.
@@ -74,7 +75,7 @@ Cada registro tem esta forma (os prazos ficam aninhados em `datas` e a origem em
   "apostila": null }
 ```
 
-`titulo` é o órgão/entidade e a manchete descritiva fica em `noticia.titulo`; o radar usa a manchete como `title` e o órgão como `organization`. `vagas_salario` mistura vagas e remuneração em texto livre, então o coletor extrai o número de vagas (ou "Cadastro de reserva") e o valor em reais. As inscrições vêm apenas de `datas.inicio`/`datas.fim`, e `datas.aberto` + `datas.texto` ("Prorrogado", "Reaberto", "Cancelado") formam a situação exibida. Nenhuma ferramenta devolve cidade: `buscar_por_cidade` filtra por cidade, mas o registro não traz o campo, então o filtro "Cidade" do painel fica vazio quando só `listar_concursos` é consultada.
+`titulo` é o órgão/entidade e a manchete descritiva fica em `noticia.titulo`; o radar usa a manchete como `title` e o órgão como `organization`. `vagas_salario` mistura vagas e remuneração em texto livre, então o coletor extrai o número de vagas (ou "Cadastro de reserva") e a remuneração, preservando qualificadores e intervalos de valores. As inscrições vêm apenas de `datas.inicio`/`datas.fim`, e `datas.aberto` + `datas.texto` ("Prorrogado", "Reaberto", "Cancelado") formam a situação exibida. Nenhuma ferramenta devolve cidade: `buscar_por_cidade` filtra por cidade, mas o registro não traz o campo, então o filtro "Cidade" do painel fica vazio quando só `listar_concursos` é consultada.
 
 A tabela de aliases em `src/lib/normalize.ts` está ajustada a esse formato. O `contentHash` é calculado a partir dos campos normalizados de `trackedContestFields`, o que é o que permite detectar mudanças aninhadas como `datas.fim`.
 
@@ -108,14 +109,27 @@ O coletor mantém o JSON original. A tabela de aliases de normalização segue o
 - Serviço remoto: `POST /api/admin/sync` com `Authorization: Bearer $SYNC_SECRET`. Sem segredo ou token inválido retorna 401. Nunca exponha esse segredo no navegador.
 - Produção: execute `npm run sync` em um worker/cron a cada 3 horas (por exemplo, minuto 15: `15 */3 * * *`). Configure `DATABASE_URL`, `RADAR_SOURCE`, `PCI_MCP_URL`, `PCI_QUERIES_JSON`, `SYNC_TIMEOUT_MS`, `SYNC_MAX_RETRIES` e `SYNC_SECRET` no ambiente secreto do provedor.
 
+A consulta externa ocorre antes da transação. A aplicação dos registros, eventos e resultado bem-sucedido é atômica; uma falha reverte o lote. Um lock de transação no PostgreSQL serializa a aplicação entre processos. Registros existentes são consultados em lote, inclusões e eventos usam createMany e registros sem alteração usam updateMany. O registro de falha é gravado depois do rollback.
+
 Não use uma plataforma que encerre processos longos de forma arbitrária sem um worker agendado. Erros ficam em `SyncRun`; o painel conserva e apresenta a data da última atualização bem-sucedida.
+
+### Agendamento no GitHub Actions
+
+O workflow `.github/workflows/sync-concursos.yml` executa `npm run sync` a cada três horas. O agendamento usa UTC e corresponde a 00:15, 03:15, 06:15, 09:15, 12:15, 15:15, 18:15 e 21:15 em Brasília. Há também execução manual em **Actions → Atualizar concursos a cada 3 horas → Run workflow**.
+
+- O arquivo precisa estar na branch principal para que o agendamento funcione.
+- Configure `DATABASE_URL` em **Settings → Secrets and variables → Actions** com a conexão do mesmo banco usado pelo site. Não grave essa conexão em arquivos versionados. `DIRECT_URL` recebe o mesmo secret apenas para geração do cliente; nenhuma migração é executada.
+- `RADAR_SOURCE=pci` e o endpoint público da PCI ficam definidos no workflow. Para consultas próprias, configure o secret opcional `PCI_QUERIES_JSON`.
+- A tarefa executa em Linux, tem permissão de leitura do repositório, limite de dez minutos e evita duas execuções simultâneas. Não depende do computador local nem da hospedagem do site.
+- Confira os resultados em Actions e a última atualização bem-sucedida no painel. O GitHub pode atrasar os horários e desativa agendamentos de repositórios públicos após 60 dias sem atividade.
+- Runners padrão de repositórios públicos são gratuitos. Banco, hospedagem e fonte têm limites próprios; o workflow não altera planos pagos.
 
 ## Banco, testes e publicação
 
 - Migração local: `npm run db:migrate`
 - Aplicar migrações em produção: `npm run db:deploy`
 - Sincronizar: `npm run sync`
-- Verificações: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npm run contrast` e `npm run audit` (os dois últimos exigem o painel de pé; `contrast` só lê o CSS)
+- Verificações: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npm run contrast` e `npm run audit` (`audit` exige o painel de pé; `contrast` só lê o CSS)
 - Desenvolver: `npm run dev`; publicar: `npm run build` e `npm start` em runtime Node, com PostgreSQL persistente.
 
 Use um serviço PostgreSQL gerenciado, configure as variáveis de ambiente, execute `npm run db:deploy` antes de iniciar a aplicação e configure o cron/worker acima. A publicação redistribui campos retornados pela PCI; consulte as condições de uso e obtenha autorização aplicável antes de oferecer redistribuição comercial.

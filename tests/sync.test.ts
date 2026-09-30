@@ -1,17 +1,36 @@
-import { afterEach, beforeEach, describe, it } from "node:test";
+import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import assert from "node:assert/strict";
 import { normalizeRecord } from "../src/lib/normalize";
 import { synchronize } from "../src/lib/sync";
 import { memoryStore } from "../src/lib/memory-store";
 import type { SourceResult } from "../src/lib/types";
 
-const input=(id:string,title:string,salary="R$ 4.000",end?:string)=>normalizeRecord({id,titulo:title,orgao:"Órgão de teste",cargo:["Analista"],remuneracao:salary,inscricoes_fim:end??"2026-12-20",url:`https://example.org/edital/${id}`});
+const input=(id:string,title:string,salary="R$ 4.000",end?:string)=>normalizeRecord({id,titulo:title,orgao:"Órgão de teste",situacao:"Inscrições abertas",cargo:["Analista"],remuneracao:salary,inscricoes_fim:end??"2026-12-20",url:`https://example.org/edital/${id}`});
 const result=(...records:ReturnType<typeof input>[]):SourceResult=>({source:"pci",contests:records,complete:false,notes:[],expectedCount:records.length});
 let oldSource:string|undefined; let store:ReturnType<typeof memoryStore>;
 beforeEach(()=>{oldSource=process.env.RADAR_SOURCE;process.env.RADAR_SOURCE="pci";store=memoryStore();});
-afterEach(()=>{if(oldSource===undefined)delete process.env.RADAR_SOURCE;else process.env.RADAR_SOURCE=oldSource;});
+afterEach(()=>{mock.restoreAll();if(oldSource===undefined)delete process.env.RADAR_SOURCE;else process.env.RADAR_SOURCE=oldSource;});
 
 describe("sincronização e histórico",()=>{
+  it("reverte alterações e inclusões se uma escrita no lote falha", async () => {
+    await synchronize(async () => result(input("a", "Original")), store);
+    const old = structuredClone(store.rows());
+    const oldEvents = structuredClone(store.events());
+    mock.method(store.concurso, "update", () => { throw new Error("Falha simulada após inclusão"); });
+    await assert.rejects(() => synchronize(async () => result(input("a", "Alterado"), input("b", "Novo")), store), /Falha simulada/);
+    assert.deepEqual(store.rows(), old);
+    assert.deepEqual(store.events(), oldEvents);
+    assert.equal(store.runs().at(-1)!.status, "failed");
+  });
+  it("agrupa registros novos e evita escritas individuais nos inalterados", async () => {
+    const records = Array.from({length: 454}, (_, i) => input(String(i), `Concurso ${i}`));
+    await synchronize(async () => result(...records), store);
+    const updateSpy = mock.method(store.concurso, "update");
+    await synchronize(async () => result(...records), store);
+    assert.equal(updateSpy.mock.callCount(), 0);
+    assert.equal(store.rows().length, 454);
+    assert.equal(store.events().length, 0);
+  });
   it("usa a primeira resposta como base e registra novas mudanças sem duplicar eventos",async()=>{
     const first=input("a","Concurso A");
     const fetch=async()=>result(first);

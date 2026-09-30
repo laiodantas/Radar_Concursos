@@ -81,9 +81,9 @@ function vacancyCount(value: unknown): string | undefined {
   if (/^\d+$/.test(text)) return text;
   return text.match(/(\d[\d.]*)\s*vagas?\b/i)?.[1] ?? (/cadastro de reserva/i.test(text) ? "Cadastro de reserva" : undefined);
 }
-function salaryText(value: unknown): string | undefined {
+export function salaryText(value: unknown): string | undefined {
   const text = asText(value); if (!text) return undefined;
-  return text.match(/R\$\s*[\d.,]+/)?.[0];
+  return text.match(/(?:até\s+|a partir de\s+|de\s+)?R\$\s*[\d.,]+(?:\s*(?:a|até|–|-)\s*R\$\s*[\d.,]+)?/i)?.[0];
 }
 /** Combina `datas.aberto` e `datas.texto` ("Prorrogado", "Reaberto", "Cancelado") em uma situação legível. */
 function statusText(raw: Record<string, unknown>): string | undefined {

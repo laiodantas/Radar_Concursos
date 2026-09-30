@@ -11,8 +11,8 @@ const sans = Archivo({ subsets: ["latin"], variable: "--font-sans", display: "sw
 import { themeBootScript } from "@/lib/theme";
 
 export const metadata: Metadata = {
-  title: "Radar de Concursos — concursos públicos com inscrições abertas",
-  description: "Painel em português que reúne concursos públicos com inscrições abertas, prazos, vagas e remuneração informados pela PCI Concursos."
+  title: "Radar de Concursos — oportunidades e prazos de inscrição",
+  description: "Painel em português que reúne concursos públicos, prazos de inscrição, vagas e remuneração informados pela PCI Concursos."
 };
 
 /** O script pré-pintura vem de `src/lib/theme.ts` junto com a lógica do toggle. */

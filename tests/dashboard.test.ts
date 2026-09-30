@@ -39,13 +39,14 @@ describe("painel", () => {
   it("resume listas longas de cargos no cartão", () => {
     const many = render([contest({ roles: ["Analista","Técnico","Auditor","Fiscal"] })]);
     assert.ok(many.includes("Analista, Técnico e mais 2"));
-    assert.ok(!many.includes("Auditor"));
+    assert.ok(many.includes("Auditor"));
+    assert.ok(many.includes("<details"));
   });
   it("rotula cada campo do cartão e traduz o prazo em palavras", () => {
     const html = render([contest()]);
     for (const label of ["Local", "Cargos", "Vagas"]) assert.ok(html.includes(`>${label}<`), `faltou o rótulo ${label}`);
     assert.ok(html.includes("Inscrições até"));
-    assert.ok(html.includes("Remuneração: R$ 25.261,98"));
+    assert.ok(html.includes("R$ 25.261,98"));
     assert.ok(html.includes("Ver na PCI Concursos"), "o cartão precisa apontar para a fonte");
   });
   it("explica prazos próximos, vencidos e ausentes", () => {
@@ -59,13 +60,25 @@ describe("painel", () => {
     assert.ok(html.includes("Usar tema escuro"));
     assert.ok(html.includes("aria-pressed=\"false\""));
   });
+  it("renderiza no máximo 25 concursos e oferece próxima página", () => {
+    const html = render(Array.from({length: 60}, (_, i) => contest({id: `c${i}`})));
+    assert.equal((html.match(/class="contest-card"/g) ?? []).length, 25);
+    assert.ok(html.includes("Próxima"));
+    assert.ok(html.includes("Página 1 de 3"));
+  });
+  it("o instantâneo estático mostra todos os registros sem botões de paginação", () => {
+    const records = Array.from({length: 60}, (_, i) => contest({id: `c${i}`}));
+    const html = renderToStaticMarkup(React.createElement(Dashboard, {data: data(records), staticPreview: true}));
+    assert.equal((html.match(/class="contest-card"/g) ?? []).length, 60);
+    assert.ok(!html.includes("Páginas de concursos"));
+  });
   it("anuncia a contagem de resultados para leitores de tela", () => {
     assert.ok(render([contest()]).includes('role="status"'));
   });
   it("explica de onde vêm os dados na seção Como ler", () => {
     const html = render([contest()]);
     assert.ok(html.includes("De onde vêm esses números"));
-    assert.ok(html.includes("A PCI avisa que o acervo dela pode não cobrir todos os editais"));
+    assert.ok(html.includes("acervo pode ser incompleto"));
     assert.ok(html.includes("America/Sao_Paulo"));
   });
 });

@@ -6,9 +6,9 @@ import path from "node:path";
 /**
  * Aplica as migrações do Prisma através do driver HTTPS do Neon, para redes que
  * bloqueiam a porta 5432 (o CLI `prisma migrate deploy` precisa de TCP direto).
- * O driver HTTP do Neon executa um comando por chamada, então cada arquivo é
- * dividido em comandos (removendo comentários de linha). Cada migração aplicada
- * é registrada em `_prisma_migrations` com o checksum do arquivo original.
+ * Cada arquivo SQL simples é dividido em comandos e aplicado em uma única
+ * transação HTTP junto do registro de migração. Uma falha reverte o lote.
+ * Cada migração aplicada é registrada em `_prisma_migrations` com o checksum do arquivo original.
  */
 const MIGRATIONS_DIR = "prisma/migrations";
 const url = process.env.DIRECT_URL ?? process.env.DATABASE_URL ?? "";
@@ -36,24 +36,32 @@ async function main() {
     logs TEXT,
     applied_steps_count INTEGER NOT NULL DEFAULT 0,
     started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    finished_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    finished_at TIMESTAMPTZ,
+    rolled_back_at TIMESTAMPTZ
   )`;
 
-  const done = await sql`SELECT migration_name FROM "_prisma_migrations"`;
-  const applied = new Set(done.map(r => r.migration_name));
+  await sql`ALTER TABLE "_prisma_migrations" ADD COLUMN IF NOT EXISTS rolled_back_at TIMESTAMPTZ`;
+  const done = await sql`SELECT migration_name, checksum FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL`;
+  const applied = new Map(done.map(r => [r.migration_name, r.checksum]));
 
   for (const folder of folders) {
-    if (applied.has(folder)) { console.log("· já aplicada:", folder); continue; }
     const file = path.join(MIGRATIONS_DIR, folder, "migration.sql");
     const content = await readFile(file, "utf8");
     const checksum = createHash("sha256").update(content).digest("hex");
-    const steps = statements(content);
-    for (let i = 0; i < steps.length; i++) {
-      try { await sql.query(steps[i]); }
-      catch (e) { throw new Error(`migração ${folder}, comando ${i + 1}/${steps.length}: ${(e instanceof Error ? e.message : String(e)).slice(0, 200)}`); }
+    if (applied.has(folder)) {
+      if (applied.get(folder) !== checksum) throw new Error(`Checksum alterado na migração já aplicada: ${folder}`);
+      console.log("· já aplicada:", folder); continue;
     }
-    await sql`INSERT INTO "_prisma_migrations" (id, checksum, migration_name, applied_steps_count, finished_at)
-              VALUES (${`manual-${folder}`}, ${checksum}, ${folder}, ${steps.length}, now())`;
+    const steps = statements(content);
+    try {
+      await sql.transaction(tx => [
+        ...steps.map(step => tx.query(step)),
+        tx`INSERT INTO "_prisma_migrations" (id, checksum, migration_name, applied_steps_count, finished_at)
+           VALUES (${`manual-${folder}`}, ${checksum}, ${folder}, ${steps.length}, now())`
+      ]);
+    } catch (error) {
+      throw new Error(`migração ${folder} revertida: ${(error instanceof Error ? error.message : String(error)).slice(0, 200)}`);
+    }
     console.log(`✔ aplicada: ${folder} (${steps.length} comandos)`);
   }
 

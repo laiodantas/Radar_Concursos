@@ -5,14 +5,14 @@
   animation: loading-shimmer 1.3s infinite linear;
   border-radius: var(--radius);
 }
-.skeleton.title { height: 74px; width: min(520px, 82%); }
+.skeleton.title { height: 44px; width: min(520px, 82%); }
 .skeleton.subtitle { height: 14px; width: min(380px, 68%); }
-.skeleton.stats { height: 118px; margin: 18px 0; }
+.skeleton.stats { height: 80px; margin: 18px 0; }
 .skeleton.row { height: 88px; }
 .loading-label { margin: 0; color: var(--muted); font-size: 13px; }
 @keyframes loading-shimmer { to { background-position: -200% 0; } }
 @media (min-width: 900px) {
-  .skeleton.stats { height: 132px; }
+  .skeleton.stats { height: 80px; }
   .loading-block { margin-top: 38px; }
 }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }

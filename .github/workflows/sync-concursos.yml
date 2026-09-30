@@ -1,0 +1,53 @@
+name: Atualizar concursos a cada 3 horas
+
+on:
+  schedule:
+    # UTC; em Brasília: 00:15, 03:15, 06:15, 09:15, 12:15, 15:15, 18:15, 21:15.
+    - cron: '15 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: radar-concursos-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Consultar PCI e atualizar o banco
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Preparar Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci
+      - name: Gerar cliente do banco
+        run: npm run db:generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DATABASE_URL }}
+      - name: Sincronizar concursos
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo '::error::Configure o secret DATABASE_URL nas configurações do repositório.'
+            exit 1
+          fi
+          npm run sync
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DATABASE_URL }}
+          RADAR_SOURCE: pci
+          PCI_MCP_URL: https://mcp.pciconcursos.com.br/mcp
+          PCI_QUERIES_JSON: ${{ secrets.PCI_QUERIES_JSON }}
+          SYNC_TIMEOUT_MS: '20000'
+          SYNC_MAX_RETRIES: '2'
+          TZ: America/Sao_Paulo
