@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Archivo, Archivo_Black } from "next/font/google";
 import "./globals.css";
 import "./loading.css";
+import "./design-refinement.css";
 
 // Direção Swiss / International Typographic: uma família grotesca neutra em escala
 // dramática. Archivo Black dá o peso de cartaz aos títulos e números; Archivo serve o texto.

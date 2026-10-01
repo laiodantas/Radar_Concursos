@@ -12,6 +12,7 @@ export function ContestFilters({ contests, filters, update, clear, storage }: { 
   const active = (Object.keys(filters) as Array<keyof Filters>).filter(key => key !== 'sort' && filters[key]);
   const chips: Record<string, string> = { q: `Busca: ${filters.q}`, uf: `Estado: ${filters.uf}`, city: `Cidade: ${filters.city}`, region: `Região: ${filters.region}`, education: `Escolaridade: ${educationLabels[filters.education ?? '']}`, situation: situations[filters.situation], deadline: deadlines[filters.deadline] };
   return <div className="filter-panel">
+    <div className="filter-panel-heading"><h2>Busque sua oportunidade</h2><span>Combine os filtros para encontrar seu concurso</span></div>
     <div className="quick-search">
       <div className="search-wrap"><Search size={18}/><input aria-label="Buscar por cargo, órgão ou palavra-chave" placeholder="Cargo, órgão ou palavra-chave" value={filters.q} onChange={e => update('q', e.target.value)}/>{filters.q && <button aria-label="Limpar busca" onClick={() => update('q', '')}><X size={16}/></button>}</div>
       <label className="quick-state"><span className="filter-label">Estado (UF)</span><select value={filters.uf} onChange={e => update('uf', e.target.value)}><option value="">Todos os estados</option>{options('uf').map(v => <option key={v}>{v}</option>)}</select></label>

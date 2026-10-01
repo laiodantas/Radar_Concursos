@@ -7,7 +7,7 @@ export function ContestCard({ contest: c, index, now }: { contest: Contest; inde
   const state = registrationState(c, now);
   const urgent = state === 'open' && (daysTo(c.registrationEnd, now) ?? Infinity) <= 7;
   const roles = c.roles.length > 3 ? `${c.roles[0]}, ${c.roles[1]} e mais ${c.roles.length - 2}` : c.roles.join(', ');
-  return <article className="contest-card">
+  return <article className={`contest-card${urgent ? ' contest-card-urgent' : ''}`}>
     <span className="contest-folio" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
     <div className="contest-body">
       <div className="contest-kicker">{c.isDemo ? <span className="demo-mini">Exemplo fictício</span> : <span className="org-kicker">{c.organization || 'Órgão não informado'}</span>}</div>
